@@ -29,6 +29,18 @@ public class Hash {
 		// convert the hex into BigInteger
 		
 		// return the BigInteger
+		MessageDigest md;
+		
+		try {
+			md = MessageDigest.getInstance("MD5");
+			byte[] mdbytes = md.digest(entity.getBytes("UTF-8"));
+			
+			String hex = toHex(mdbytes);
+			
+			hashint = new BigInteger(hex, 16);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		
 		return hashint;
 	}
@@ -42,8 +54,11 @@ public class Hash {
 		// compute the address size = 2 ^ number of bits
 		
 		// return the address size
+		BigInteger mod = new BigInteger("2");
 		
-		return null;
+		mod = mod.pow(bitSize());	
+		
+		return mod;
 	}
 	
 	public static int bitSize() {
@@ -51,6 +66,12 @@ public class Hash {
 		int digestlen = 0;
 		
 		// find the digest length
+		try {
+			MessageDigest md = MessageDigest.getInstance("MD5");
+			digestlen = md.getDigestLength();
+			}catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			}
 		
 		return digestlen*8;
 	}
