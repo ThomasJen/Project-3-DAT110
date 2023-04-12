@@ -3,7 +3,6 @@
  */
 package no.hvl.dat110.middleware;
 
-import java.math.BigInteger;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,13 +59,11 @@ public class MutualExclusion {
 		// increment clock
 	     clock.increment();
 		
-		// adjust the clock on the message, by calling the setClock on the message
+		// the clock on the message, by calling the setClock on the message
 	     message.setClock(clock.getClock());
 				
 		// wants to access resource - set the appropriate lock variable
 	     WANTS_TO_ENTER_CS = true;
-		
-		// start MutualExclusion algorithm
 		
 		// first, call removeDuplicatePeersBeforeVoting. A peer can hold/contain 2 replicas of a file. This peer will appear twice
 	     List<Message> messages = removeDuplicatePeersBeforeVoting();
@@ -96,18 +93,15 @@ public class MutualExclusion {
 	private void multicastMessage(Message message, List<Message> activenodes) throws RemoteException {
 		
 				// iterate over the activenodes
-		   for (Message m : activenodes) {
+		   for (Message msg : activenodes) {
 	            // obtain a stub for each node from the registry
-	            NodeInterface stub = Util.getProcessStub(m.getNodeName(), m.getPort());
+	            NodeInterface stub = Util.getProcessStub(msg.getNodeName(), msg.getPort());
 
 	            // call onMutexRequestReceived()
 	            if (stub != null) {
 	                stub.onMutexRequestReceived(message);
 	            }
 	        }
-		
-		logger.info("Number of peers to vote = "+activenodes.size());
-		
 	}
 	
 	public void onMutexRequestReceived(Message message) throws RemoteException {
@@ -120,15 +114,7 @@ public class MutualExclusion {
 	            message.setAcknowledged(true);
 	            onMutexAcknowledgementReceived(message);
 		}
-			
 		
-		/* write if statement to transition to the correct caseid */
-		
-		// caseid=0: Receiver is not accessing shared resource and does not want to (send OK to sender)
-		
-		// caseid=1: Receiver already has access to the resource (dont reply but queue the request)
-		
-		// caseid=2: Receiver wants to access resource but is yet to - compare own message clock to received message's clock
 		
 	   int caseid = (!CS_BUSY && !WANTS_TO_ENTER_CS) ? 0 : CS_BUSY ? 1 : 2;
 
@@ -152,10 +138,7 @@ public class MutualExclusion {
 				
 				NodeInterface stub = Util.getProcessStub(procName, port);
                 message.setAcknowledged(true);
-                if (stub != null) {
-                    stub.onMutexRequestReceived(message);
-                }
-				
+                stub.onMutexRequestReceived(message);	
 				break;
 			}
 		
@@ -182,26 +165,22 @@ public class MutualExclusion {
 			       int messageClock = message.getClock();
 	                int ownClock = clock.getClock();
 
-	                if (messageClock == ownClock) {
-	                    if (message.getNodeID().compareTo(node.getNodeID()) < 0) {
-	                        message.setAcknowledged(true);
-	                        NodeInterface stub = Util.getProcessStub(procName, port);
-	                        if (stub != null) {
-	                            stub.onMutexAcknowledgementReceived(message);
-	                        }
-	                    } else {
+	                if (messageClock == ownClock) 
+	                    if (message.getNodeID().compareTo(node.getNodeID()) < 0) 
 	                        queue.add(message);
-	                    }
-	                } else if (messageClock < ownClock) {
+	                
+	                    else {  NodeInterface stub = Util.getProcessStub(procName, port);
+	                    		stub.onMutexAcknowledgementReceived(message);
+	                    		message.setAcknowledged(true);
+	                       
+	                    } 
+	                else if (messageClock < ownClock) {
 	                    message.setAcknowledged(true);
 	                    NodeInterface stub = Util.getProcessStub(procName, port);
-	                    if (stub != null) {
-	                        stub.onMutexAcknowledgementReceived(message);
-	                    }
-	                } else {
-	                    queue.add(message);
-	                }
-
+	                    stub.onMutexAcknowledgementReceived(message);
+	                
+	                	} else 
+	                		queue.add(message);
 				break;
 			}
 			
@@ -225,17 +204,17 @@ public class MutualExclusion {
 		// obtain a stub for each node from the registry
 		// call releaseLocks()	
 		
-		for (Message m : activenodes) {
-            NodeInterface stub = Util.getProcessStub(m.getNodeName(), m.getPort());
+		for (Message msg : activenodes) {
+            NodeInterface stub = Util.getProcessStub(msg.getNodeName(), msg.getPort());
 
             try {
-                if (stub != null) {
-                    stub.releaseLocks();
-                }
+                    stub.releaseLocks();        
             } catch (RemoteException e) {
+            	
                 e.printStackTrace();
             }
         }
+		releaseLocks();
 	}
 	
 	private boolean areAllMessagesReturned(int numvoters) throws RemoteException {

@@ -13,7 +13,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class Hash { 
 	
-	
+	private static MessageDigest md = null;
 	public static BigInteger hashOf(String entity) {	
 		
 		BigInteger hashint = null;
@@ -22,23 +22,16 @@ public class Hash {
 		
 		// we use MD5 with 128 bits digest
 		
-		// compute the hash of the input 'entity'
-		
-		// convert the hash into hex format
-		
-		// convert the hex into BigInteger
-		
-		// return the BigInteger
-		MessageDigest md;
-		
 		try {
 			md = MessageDigest.getInstance("MD5");
-			byte[] mdbytes = md.digest(entity.getBytes("UTF-8"));
-			
+			// compute the hash of the input 'entity'
+			byte[] mdbytes = md.digest(entity.getBytes());
+			// convert the hash into hex format
 			String hex = toHex(mdbytes);
-			
+			// convert the hex into BigInteger
 			hashint = new BigInteger(hex, 16);
-		} catch (Exception e){
+			// return the BigInteger
+		} catch (NoSuchAlgorithmException e){
 			e.printStackTrace();
 		}
 		
@@ -46,19 +39,17 @@ public class Hash {
 	}
 	
 	public static BigInteger addressSize() {
-		
+		BigInteger out = null;
 		// Task: compute the address size of MD5
 		
 		// compute the number of bits = bitSize()
-		
+		int length = bitSize();
 		// compute the address size = 2 ^ number of bits
-		
+		out = (new BigInteger("2").pow(length));
 		// return the address size
-		BigInteger mod = new BigInteger("2");
 		
-		mod = mod.pow(bitSize());	
-		
-		return mod;
+		return out;
+	
 	}
 	
 	public static int bitSize() {
@@ -67,8 +58,7 @@ public class Hash {
 		
 		// find the digest length
 		try {
-			MessageDigest md = MessageDigest.getInstance("MD5");
-			digestlen = md.getDigestLength();
+				digestlen = MessageDigest.getInstance("MD5").getDigestLength();
 			}catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
 			}
